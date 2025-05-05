@@ -38,7 +38,7 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
       store: MongoStore.create({
         client, 
         collectionName: 'sessions',
-        crypto: { secret: process.env.MONGODB_SESSION_SECRET }, 
+        crypto: { secret: process.env.MONGODB_SESSION_SECRET },  
         ttl: 60 * 60,
       }),
     })
