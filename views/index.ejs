@@ -1,0 +1,9 @@
+<%- include('templates/header', { title: 'Sign Up' }) %>
+<% if (!user) { %>
+  <h1>Welcome!</h1>
+  <a href="/signup">Sign up</a> | <a href="/login">Log in</a>
+<% } else { %>
+  <h1>Hello, <%= user.name %>!</h1>
+  <a href="/members">Members</a> | <a href="/logout">Sign out</a>
+<% } %>
+<%- include('templates/footer') %>

@@ -1,0 +1,11 @@
+<%- include('templates/header', { title: 'Admin Dashboard' }) %>
+
+<h1 class="my-4">Admin Page</h1>
+
+<ol class="list-group list-group-numbered">
+  <% users.forEach(user => { %>
+    <%- include('templates/user', { user }) %>
+  <% }) %>
+</ol>
+
+<%- include('templates/footer') %>

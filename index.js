@@ -6,6 +6,7 @@ const { MongoClient } = require('mongodb');
 const path = require('path');
 const Joi = require('joi');
 const bcrypt = require('bcrypt');
+app.set('view engine', 'ejs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,8 +56,36 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
     password : Joi.string().min(8).max(64).required()
   });
 
+  function validate(schema, source = 'body') {
+    return (req, res, next) => {
+      const { error, value } = schema.validate(req[source], {
+        abortEarly: false,   
+        stripUnknown: true,  
+      });
+      if (error) {
+        const msg = error.details.map(d => d.message).join('<br>');
+        const view = req.path.includes('signup') ? 'signup' : 'login';
+        return res.status(400).render(view, { error: msg });
+      }
+      req[source] = value; 
+      next();
+    };
+  }
+
   function requireLogin(req, res, next) {
     if (!req.session.user) return res.redirect('/');
+    next();
+  }
+
+  function requireAdmin(req, res, next) {
+    if (!req.session.user) {
+      return res.redirect('/');
+    }
+    if (req.session.user.user_type !== 'admin') {
+      return res.status(403).render('403', {
+        message: 'You need to be an admin to view this page.'
+      });
+    }
     next();
   }
 
@@ -67,75 +96,101 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
 
   // routes
   // home
-  app.get('/', (req, res) => {
-    if (!req.session.user) {
-      return res.send(`
-        <h1>Hello!</h1>
-        <a href="/signup">Sign up</a> |
-        <a href="/login">Log in</a>
-      `);
-    }
-    res.send(`
-      <h1>Hello, ${req.session.user.name}</h1>
-      <a href="/members">Members</a> |
-      <a href="/logout">Sign out</a>
-    `);
-  });
+  app.get('/', (req, res) =>
+    res.render('index', { user: req.session.user })
+  );
 
   // sign up form
-  app.get('/signup', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/signup.html'));
-  });
+  app.get('/signup', (req, res) => res.render('signup'));
 
-  // handle sign up
-  app.post('/signup', async (req, res) => {
-    const { error, value } = signupSchema.validate(req.body);
-    if (error)
-      return res.status(400).send(`${error.message}<br><a href="/signup">Try again</a>`);
-
-    if (await users.findOne({ email: value.email.toLowerCase() }))
-      return res.status(400).send('Email already in use<br><a href="/signup">Try again</a>');
-
-    const hashed = await bcrypt.hash(value.password, 10);
-    await users.insertOne({ name: value.name, email: value.email.toLowerCase(), password: hashed });
-
-    req.session.user = { name: value.name, email: value.email.toLowerCase() };
+  app.post('/signup', validate(signupSchema, 'body'), async (req, res) => {
+    const { name, email, password } = req.body;
+    const existing = await users.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return res
+        .status(400)
+        .render('signup', { error: 'Email already in use. Try a different email.' });
+    }
+    const hashed = await bcrypt.hash(password, 10);
+    await users.insertOne({
+      name,
+      email: email.toLowerCase(),
+      password: hashed,
+      user_type: 'user'
+    });
+    req.session.user = { name, email: email.toLowerCase(), user_type: 'user' };
     res.redirect('/members');
-  });
+    }
+  );
 
   // Log‑in form
-  app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'views/login.html')));
+  app.get('/login', (req, res) => res.render('login'));
 
-  // Handle log‑in
-  app.post('/login', async (req, res) => {
-    const { error, value } = loginSchema.validate(req.body);
-    if (error)
-      return res.status(400).send(`${error.message}<br><a href="/login">Try again</a>`);
-
-    const user = await users.findOne({ email: value.email.toLowerCase() });
-    if (!user || !(await bcrypt.compare(value.password, user.password)))
-      return res.status(400).send('User and/or password not found<br><a href="/login">Try again</a>');
-
-    req.session.user = { name: user.name, email: user.email };
-    res.redirect('/members');
-  });
+  app.post(
+    '/login',
+    validate(loginSchema, 'body'),
+    async (req, res) => {
+      const { email, password } = req.body;
+      const user = await users.findOne({ email: email.toLowerCase() });
+      if (!user) {
+        return res
+          .status(400)
+          .render('login', { error: 'No account exists with that email.' });
+      }
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+        return res
+          .status(400)
+          .render('login', { error: 'Incorrect password. Please try again.' });
+      }
+      req.session.user = {
+        name: user.name,
+        email: user.email,
+        user_type: user.user_type
+      };
+      res.redirect('/members');
+    }
+  );
 
   app.get('/members', requireLogin, (req, res) => {
-    const pics = ['1.jpg', '2.jpg', '3.jpg'];               
-    const img  = pics[Math.floor(Math.random() * pics.length)];
-    res.send(`<h1>Hello, ${req.session.user.name}</h1>
-      <img src="/images/${img}" alt="Random image"><br>
-      <a href="/logout">Sign out</a>`);
+    const pics = ['1.jpg','2.jpg','3.jpg'];
+    res.render('members', { user: req.session.user, images: pics });
   });
+
+  app.get(
+    '/admin/promote/:username',
+    requireLogin,        
+    requireAdmin,        
+    async (req, res) => {
+      await users.updateOne(
+        { username: req.params.username },
+        { $set: { user_type: 'admin' } }
+      );
+      res.redirect('/admin');
+    }
+  );
+
+  app.get(
+    '/admin/demote/:username',
+    requireLogin,
+    requireAdmin,
+    async (req, res) => {
+      await users.updateOne(
+        { username: req.params.username },
+        { $set: { user_type: 'user' } }
+      );
+      res.redirect('/admin');
+    }
+  );
 
   app.get('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/'));
   });
 
   app.use((req, res) => {
-    res.status(404).send('Page not found');
+    res.status(404).render('404');
   });
-
+  
   app.listen(PORT, () => {
     console.log(`Server on http://localhost:${PORT}`);
   });
