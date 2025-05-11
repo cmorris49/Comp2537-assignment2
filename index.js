@@ -6,9 +6,8 @@ const { MongoClient } = require('mongodb');
 const path = require('path');
 const Joi = require('joi');
 const bcrypt = require('bcrypt');
-app.set('view engine', 'ejs');
-
 const app = express();
+app.set('view engine', 'ejs');
 const PORT = process.env.PORT || 3000;
 
 // mongodb connection string
@@ -73,13 +72,13 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
   }
 
   function requireLogin(req, res, next) {
-    if (!req.session.user) return res.redirect('/');
+    if (!req.session.user) return res.redirect('/login');
     next();
   }
 
   function requireAdmin(req, res, next) {
     if (!req.session.user) {
-      return res.redirect('/');
+      return res.redirect('/login');
     }
     if (req.session.user.user_type !== 'admin') {
       return res.status(403).render('403', {
@@ -126,10 +125,7 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
   // Log‑in form
   app.get('/login', (req, res) => res.render('login'));
 
-  app.post(
-    '/login',
-    validate(loginSchema, 'body'),
-    async (req, res) => {
+  app.post('/login', validate(loginSchema, 'body'), async (req, res) => {
       const { email, password } = req.body;
       const user = await users.findOne({ email: email.toLowerCase() });
       if (!user) {
@@ -157,26 +153,25 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
     res.render('members', { user: req.session.user, images: pics });
   });
 
-  app.get(
-    '/admin/promote/:username',
-    requireLogin,        
-    requireAdmin,        
-    async (req, res) => {
+  app.get('/admin', requireLogin, requireAdmin, async (req,res) => {
+    const allUsers = await users.find().toArray();
+    res.render('admin', { users: allUsers });
+  }
+);
+
+
+  app.get('/admin/promote/:name', requireLogin, requireAdmin, async (req, res) => {
       await users.updateOne(
-        { username: req.params.username },
+        { name: req.params.name },
         { $set: { user_type: 'admin' } }
       );
       res.redirect('/admin');
     }
   );
 
-  app.get(
-    '/admin/demote/:username',
-    requireLogin,
-    requireAdmin,
-    async (req, res) => {
+  app.get('/admin/demote/:name', requireLogin, requireAdmin, async (req, res) => {
       await users.updateOne(
-        { username: req.params.username },
+        { name: req.params.name },
         { $set: { user_type: 'user' } }
       );
       res.redirect('/admin');

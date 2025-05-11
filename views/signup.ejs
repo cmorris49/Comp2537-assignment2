@@ -1,6 +1,7 @@
 <%- include('templates/header', { title: 'Sign Up' }) %>
 <% if (error) { %>
   <div class="alert alert-danger mt-3"><%= error %></div>
+  <a href="/login" class="mt-2 d-block">Back to Log In</a>
 <% } %>
 <h1>Sign Up</h1>
 <form action="/signup" method="POST">
