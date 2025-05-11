@@ -76,6 +76,11 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
     next();
   }
 
+  function requireLoginHome(req, res, next) {
+    if (!req.session.user) return res.redirect('/');   
+    next();
+  }
+
   function requireAdmin(req, res, next) {
     if (!req.session.user) {
       return res.redirect('/login');
@@ -148,7 +153,7 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
     }
   );
 
-  app.get('/members', requireLogin, (req, res) => {
+  app.get('/members', requireLoginHome, (req, res) => {
     const pics = ['1.jpg','2.jpg','3.jpg'];
     res.render('members', { user: req.session.user, images: pics });
   });
