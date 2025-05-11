@@ -1,12 +1,20 @@
-<%- include('templates/header', { title: 'Sign Up' }) %>
-<% if (error) { %>
-  <div class="alert alert-danger mt-3"><%= error %></div>
-  <a href="/signup" class="mt-2 d-block">Back to Sign Up</a>
-<% } %>
-<h1>Log In</h1>
-<form action="/login" method="POST">
-  <label>Email: <input name="email" type="email" required></label><br>
-  <label>Password: <input name="password" type="password" required></label><br>
-  <button type="submit">Log In</button>
-</form>
+<%- include('templates/header', { title: 'Login' }) %>
+<div class="container mt-5" style="max-width: 400px;">
+  <% if (error) { %>
+    <div class="alert alert-danger mt-3"><%= error %></div>
+    <a href="/signup" class="mt-2 d-block">Back to Sign Up</a>
+  <% } %>
+  <h2 class="mb-4">Log In</h2>
+  <form action="/login" method="POST">
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input name="email" type="email" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input name="password" type="password" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-success w-100">Log In</button>
+  </form>
+</div>
 <%- include('templates/footer') %>

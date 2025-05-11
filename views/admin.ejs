@@ -1,11 +1,13 @@
 <%- include('templates/header', { title: 'Admin Dashboard' }) %>
-
-<h1 class="my-4">Admin Page</h1>
-
-<ol class="list-group list-group-numbered">
-  <% users.forEach(user => { %>
-    <%- include('templates/user', { user }) %>
-  <% }) %>
-</ol>
-
+<div class="container mt-5" style="max-width: 600px;"></div>
+  <h2 class="mb-4 text-center">Admin Page</h2>
+  <ol class="list-group list-group-numbered mx-auto" style="max-width: 500px;">
+    <% users.forEach(user => { %>
+      <%- include('templates/user', { user, currentName }) %>
+    <% }) %>
+  </ol>
+  <div class="text-center mt-4">
+    <a href="/" class="btn btn-info mt-4">Home</a>
+  </div>
+</div>
 <%- include('templates/footer') %>

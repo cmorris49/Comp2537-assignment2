@@ -1,10 +1,13 @@
-<%- include('templates/header', { title: 'Sign Up' }) %>
-<h1>Hello, <%= user.name %>!</h1>
-<div class="row row-cols-1 row-cols-md-3 g-4">
-  <% images.forEach(img => { %>
-    <div class="col">
-      <img src="/images/<%= img %>" class="img-fluid rounded" alt="">
-    </div>
-  <% }) %>
+<%- include('templates/header', { title: 'Members' }) %>
+<div class="container mt-5 text-center">
+  <h2 class="mb-4">Hello, <%= user.name %>!</h2>
+  <div class="row row-cols-1 row-cols-md-3 g-4">
+    <% images.forEach(img => { %>
+      <div class="col">
+        <img src="/images/<%= img %>" class="img-fluid rounded" alt="">
+      </div>
+    <% }) %>
+  </div>
+  <a href="/" class="btn btn-info mt-4">Home</a>
 </div>
 <%- include('templates/footer') %>

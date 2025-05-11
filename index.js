@@ -100,7 +100,7 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
   );
 
   // sign up form
-  app.get('/signup', (req, res) => res.render('signup'));
+  app.get('/signup', (req, res) => res.render('signup', { error: null }));
 
   app.post('/signup', validate(signupSchema, 'body'), async (req, res) => {
     const { name, email, password } = req.body;
@@ -123,7 +123,7 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
   );
 
   // Log‑in form
-  app.get('/login', (req, res) => res.render('login'));
+  app.get('/login', (req, res) => res.render('login', { error: null }));
 
   app.post('/login', validate(loginSchema, 'body'), async (req, res) => {
       const { email, password } = req.body;
@@ -155,10 +155,8 @@ const client = new MongoClient(uri, { useUnifiedTopology: true});
 
   app.get('/admin', requireLogin, requireAdmin, async (req,res) => {
     const allUsers = await users.find().toArray();
-    res.render('admin', { users: allUsers });
-  }
-);
-
+    res.render('admin', { users: allUsers, currentName: req.session.user.name });
+  });
 
   app.get('/admin/promote/:name', requireLogin, requireAdmin, async (req, res) => {
       await users.updateOne(
