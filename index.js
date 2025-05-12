@@ -76,6 +76,7 @@ const client = new MongoClient(uri);
     next();
   }
 
+  // for members page.
   function requireLoginHome(req, res, next) {
     if (!req.session.user) return res.redirect('/');   
     next();
