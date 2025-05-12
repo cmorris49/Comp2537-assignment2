@@ -15,5 +15,8 @@
     <nav class="navbar navbar-dark bg-dark">
       <div class="container">
         <a class="navbar-brand text-white" href="/">Assignment 2</a>
+        <% if (user) { %>
+          <a class="btn btn-outline-light ms-auto" href="/logout">Log Out</a>
+        <% } %>
       </div>
     </nav>
