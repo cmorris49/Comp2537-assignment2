@@ -94,6 +94,11 @@ const client = new MongoClient(uri);
   }
 
   app.use((req, res, next) => {
+    res.locals.user = req.session.user || null;
+    next();
+  });
+
+  app.use((req, res, next) => {
     req.userCollection = db.collection('users');
     next();
   });
@@ -105,7 +110,7 @@ const client = new MongoClient(uri);
   );
 
   // sign up form
-  app.get('/signup', (req, res) => res.render('signup', { error: null }));
+  app.get('/signup', (req, res) => res.render('signup', { error: null, values: {} }));
 
   app.post('/signup', validate(signupSchema, 'body'), async (req, res) => {
     const { name, email, password } = req.body;
@@ -128,7 +133,7 @@ const client = new MongoClient(uri);
   );
 
   // Log‑in form
-  app.get('/login', (req, res) => res.render('login', { error: null }));
+  app.get('/login', (req, res) => res.render('login', { error: null, values: {} }));
 
   app.post('/login', validate(loginSchema, 'body'), async (req, res) => {
       const { email, password } = req.body;
