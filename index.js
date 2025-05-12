@@ -18,7 +18,7 @@ const uri = `mongodb+srv://${process.env.MONGODB_USER}:${
 }?retryWrites=true&w=majority`;
 
 // mongodb
-const client = new MongoClient(uri, { useUnifiedTopology: true});
+const client = new MongoClient(uri);
 
 (async () => {
   await client.connect();
